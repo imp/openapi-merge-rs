@@ -1,0 +1,14 @@
+[workspace]
+members = ["openapi-merge", "openapi-merge-cli"]
+resolver = "2"
+
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+repository = "https://github.com/"
+license = "Apache-2.0 OR MIT"
+
+
+[workspace.dependencies]
+openapi-merge = { path = "openapi-merge" }
