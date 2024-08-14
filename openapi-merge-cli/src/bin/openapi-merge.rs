@@ -11,12 +11,18 @@ fn main() -> io::Result<()> {
     let mut args = env::args();
     let name = args.next().unwrap();
     if let Some(path) = args.next() {
-        let openapi = MergeConfig::from_path(path)?;
-        openapi.merge()
+        MergeConfig::from_path(path)
+            .inspect(report_config)?
+            .load_inputs()
+            .inspect(report_inputs)?
+            .merge()
+            .inspect(report_merge)?
+            .save()
+            .inspect(report_save)?;
     } else {
         eprintln!("Usage: {name} <config.json>");
-        Ok(())
     }
+    Ok(())
 }
 
 pub fn report_config(config: &MergeConfig) {
@@ -36,34 +42,18 @@ pub fn report_inputs(config: &MergeConfig) {
     })
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use assert_json_diff::assert_json_eq;
-//     use openapiv3::OpenAPI;
-//     use pretty_assertions::assert_eq;
-//     use serde_json as json;
+fn report_merge(config: &MergeConfig) {
+    println!(
+        "## Inputs merged, writing the results out to '{}' ({:?})",
+        config.output.display(),
+        config.merge_time,
+    )
+}
 
-//     fn load_json<T>(text: &str) -> json::Result<T>
-//     where
-//         T: serde::de::DeserializeOwned,
-//     {
-//         json::from_str(text)
-//     }
-
-//     const OLD: &str = include_str!("../user-facing-openapi-old.json");
-//     const NEW: &str = include_str!("../user-facing-openapi-new.json");
-
-//     #[test]
-//     fn openapi_compatibility() {
-//         let old: OpenAPI = load_json(OLD).unwrap();
-//         let new: OpenAPI = load_json(NEW).unwrap();
-//         assert_eq!(old, new);
-//     }
-
-//     #[test]
-//     fn json_value_compatibility() {
-//         let old: json::Value = load_json(OLD).unwrap();
-//         let new: json::Value = load_json(NEW).unwrap();
-//         assert_json_eq!(old, new);
-//     }
-// }
+fn report_save(config: &MergeConfig) {
+    println!(
+        "## Finished writing to '{}' ({:?})",
+        config.output.display(),
+        config.save_time
+    );
+}

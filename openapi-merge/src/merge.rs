@@ -8,6 +8,12 @@ pub struct MergeConfig {
     pub source: PathBuf,
     #[serde(skip)]
     pub load_time: time::Duration,
+    #[serde(skip)]
+    pub merged: OpenAPI,
+    #[serde(skip)]
+    pub merge_time: time::Duration,
+    #[serde(skip)]
+    pub save_time: time::Duration,
 }
 
 impl MergeConfig {
@@ -41,28 +47,32 @@ impl MergeConfig {
             .map(|inputs| Self { inputs, ..self })
     }
 
-    pub fn merge(self) -> io::Result<()> {
+    pub fn merge(mut self) -> io::Result<Self> {
         // Use first element is a base for merging
         let now = time::Instant::now();
-        let mut inputs = self.inputs.into_iter();
+        let mut inputs = self.inputs.drain(..);
         let base = inputs
             .next()
             .ok_or(io::Error::other("At least one input required"))?;
-        let merged = inputs.fold(base, merge_into_base);
-        println!(
-            "## Inputs merged, writing the results out to '{}' ({:?})",
-            self.output.display(),
-            now.elapsed()
-        );
+        let merged = inputs.fold(base, merge_into_base).openapi;
+        let merge_time = now.elapsed();
 
+        Ok(Self {
+            merged,
+            merge_time,
+            ..self
+        })
+    }
+
+    pub fn save(self) -> io::Result<Self> {
+        let base = self.source.parent().unwrap_or(Path::new("."));
+        let path = base.join(&self.output);
         let now = time::Instant::now();
-        save_json_file(&self.output, &merged.openapi)?;
-        println!(
-            "## Finished writing to '{}' ({:?})",
-            self.output.display(),
-            now.elapsed()
-        );
-        Ok(())
+
+        save_json_file(&path, &self.merged)?;
+        let save_time = now.elapsed();
+
+        Ok(Self { save_time, ..self })
     }
 }
 
