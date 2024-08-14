@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Debug, Deserialize)]
+#[serde(untagged)]
 pub enum InputSource {
     InputFile {
         #[serde(rename = "inputFile")]

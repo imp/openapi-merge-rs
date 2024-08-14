@@ -81,3 +81,37 @@ fn merge_into_base(base: Input, mut other: Input) -> Input {
 
     Input { openapi, ..base }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use pretty_assertions::assert_eq;
+
+    const CONFIG: &str = r#"
+{
+  "inputs": [
+    {
+      "inputFile": "./base/openapi.json",
+      "operationSelection": {
+        "excludeTags": [
+          "deprecated"
+        ]
+      }
+    },
+    {
+      "inputFile": "./mod1/openapi.json"
+    },
+    {
+      "inputFile": "./mod2/openapi.json"
+    }
+  ],
+  "output": "./rest-api/user-facing-openapi.json"
+}
+"#;
+    #[test]
+    fn merge_config_deserialize() {
+        let config: MergeConfig = json::from_str(CONFIG).unwrap();
+        assert_eq!(config.inputs.len(), 3);
+    }
+}
