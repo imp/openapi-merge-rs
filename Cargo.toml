@@ -19,7 +19,7 @@ serde_json = "1.0"
 tracing = "0.1"
 
 # Local dependencies
-openapi-merge = { path = "openapi-merge" }
+openapi-merge = { version = "0.0.0", path = "openapi-merge" }
 
 
 [workspace.lints.clippy]
