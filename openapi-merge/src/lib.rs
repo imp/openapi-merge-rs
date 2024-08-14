@@ -1,14 +1,42 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+use std::fmt;
+use std::fs;
+use std::io;
+use std::path::{Path, PathBuf};
+use std::time;
+
+use openapiv3::OpenAPI;
+use serde::{de, Deserialize, Serialize};
+use serde_json as json;
+
+pub use ext::OpenAPIExt;
+pub use input::Description;
+pub use input::Dispute;
+pub use input::Input;
+pub use input::InputSource;
+pub use input::OperationSelection;
+pub use input::PathModification;
+pub use merge::MergeConfig;
+
+mod ext;
+mod input;
+mod merge;
+
+fn load_json_file<T>(path: impl AsRef<Path>) -> io::Result<T>
+where
+    T: de::DeserializeOwned,
+{
+    let text = fs::read_to_string(path)?;
+    json::from_str(&text).map_err(io::Error::other)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+fn save_json_file<T>(path: impl AsRef<Path>, value: &T) -> io::Result<()>
+where
+    T: Serialize,
+{
+    let text = json::to_string_pretty(value).map_err(io::Error::other)?;
+    fs::write(path, text)
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+fn default<T: Default>() -> T {
+    T::default()
 }

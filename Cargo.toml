@@ -6,9 +6,44 @@ resolver = "2"
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-repository = "https://github.com/"
+repository = "https://github.com/imp/openapi-merge-rs"
 license = "Apache-2.0 OR MIT"
 
 
 [workspace.dependencies]
+indexmap = "2.3"
+openapiv3 = "2.0"
+pretty_assertions = "1.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing = "0.1"
+
+# Local dependencies
 openapi-merge = { path = "openapi-merge" }
+
+
+[workspace.lints.clippy]
+use_self = "warn"
+map_flatten = "warn"
+map_unwrap_or = "warn"
+large_futures = "warn"
+
+
+[workspace.lints.rust]
+future_incompatible = { level = "warn", priority = -1 }
+rust_2018_compatibility = { level = "warn", priority = -1 }
+rust_2021_compatibility = { level = "warn", priority = -1 }
+rust_2024_compatibility = { level = "warn", priority = -1 }
+rust_2018_idioms = { level = "warn", priority = -1 }
+unused = { level = "warn", priority = -1 }
+deprecated_in_future = "warn"
+# non_exhaustive_omitted_patterns = "warn"
+noop_method_call = "warn"
+unreachable_pub = "warn"
+missing_debug_implementations = "warn"
+trivial_casts = "warn"
+trivial_numeric_casts = "warn"
+unused_crate_dependencies = "warn"
+unused_lifetimes = "warn"
+unused_qualifications = "warn"
+# warnings = "deny"

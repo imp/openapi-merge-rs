@@ -1,6 +1,13 @@
 [package]
 name = "openapi-merge-cli"
-version = "0.1.0"
-edition = "2021"
+description = "OpenAPI Merge Command Line Tool"
+
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
 
 [dependencies]
+openapi-merge.workspace = true
+serde.workspace = true
