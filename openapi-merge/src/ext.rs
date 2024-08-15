@@ -35,7 +35,11 @@ impl OpenAPIExt for OpenAPI {
     }
 
     fn merge_tags(&mut self, tags: Vec<openapiv3::Tag>) {
-        self.tags.extend(tags);
+        for tag in tags {
+            if !self.tags.contains(&tag) {
+                self.tags.push(tag)
+            }
+        }
     }
 
     fn merge_extensions(&mut self, extensions: indexmap::IndexMap<String, serde_json::Value>) {
