@@ -8,6 +8,7 @@ use openapiv3::OpenAPI;
 use serde::{de, Deserialize, Serialize};
 use serde_json as json;
 
+pub use config::MergeConfig;
 pub use ext::OpenAPIExt;
 pub use input::Description;
 pub use input::Dispute;
@@ -15,8 +16,9 @@ pub use input::Input;
 pub use input::InputSource;
 pub use input::OperationSelection;
 pub use input::PathModification;
-pub use merge::MergeConfig;
+pub use merge::Merge;
 
+mod config;
 mod ext;
 mod input;
 mod merge;

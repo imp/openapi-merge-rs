@@ -20,8 +20,10 @@ pub struct Input {
     pub operation_selection: Option<OperationSelection>,
     pub description: Option<Description>,
     pub path_modification: Option<PathModification>,
+    #[doc(hidden)]
     #[serde(skip)]
     pub openapi: OpenAPI,
+    #[doc(hidden)]
     #[serde(skip)]
     pub load_time: time::Duration,
 }

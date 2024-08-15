@@ -1,56 +1,18 @@
 use super::*;
 
-#[derive(Debug, Deserialize)]
-pub struct MergeConfig {
-    pub inputs: Vec<Input>,
-    pub output: PathBuf,
-    #[serde(skip)]
-    pub source: PathBuf,
-    #[serde(skip)]
-    pub load_time: time::Duration,
-    #[serde(skip)]
+#[derive(Debug, Default)]
+pub struct Merge {
+    pub config: MergeConfig,
     pub merged: OpenAPI,
-    #[serde(skip)]
     pub merge_time: time::Duration,
-    #[serde(skip)]
     pub save_time: time::Duration,
 }
 
-impl MergeConfig {
-    pub fn from_path(path: impl AsRef<Path>) -> io::Result<Self> {
-        let now = time::Instant::now();
-        let source = path.as_ref().to_path_buf();
-        let merge = load_json_file(&source)?;
-        let load_time = now.elapsed();
-
-        Ok(Self {
-            source,
-            load_time,
-            ..merge
-        })
-        // load_json_file::<Self>(path).inspect(|oam| {
-        //     println!(
-        //         "## Loaded the configuration: {} inputs ({:?})",
-        //         oam.inputs.len(),
-        //         now.elapsed()
-        //     )
-        // })
-    }
-
-    pub fn load_inputs(self) -> io::Result<Self> {
-        let base = self.source.parent().unwrap_or(Path::new("."));
-
-        self.inputs
-            .into_iter()
-            .map(|input| input.load(base))
-            .collect::<io::Result<Vec<_>>>()
-            .map(|inputs| Self { inputs, ..self })
-    }
-
+impl Merge {
     pub fn merge(mut self) -> io::Result<Self> {
-        // Use first element is a base for merging
         let now = time::Instant::now();
-        let mut inputs = self.inputs.drain(..);
+        let mut inputs = self.config.inputs.drain(..);
+        // Use first element is a base for merging
         let base = inputs
             .next()
             .ok_or(io::Error::other("At least one input required"))?;
@@ -65,14 +27,21 @@ impl MergeConfig {
     }
 
     pub fn save(self) -> io::Result<Self> {
-        let base = self.source.parent().unwrap_or(Path::new("."));
-        let path = base.join(&self.output);
         let now = time::Instant::now();
-
+        let path = self.config.output();
         save_json_file(&path, &self.merged)?;
         let save_time = now.elapsed();
 
         Ok(Self { save_time, ..self })
+    }
+}
+
+impl From<MergeConfig> for Merge {
+    fn from(config: MergeConfig) -> Self {
+        Self {
+            config,
+            ..default()
+        }
     }
 }
 
@@ -90,38 +59,4 @@ fn merge_into_base(base: Input, mut other: Input) -> Input {
     }
 
     Input { openapi, ..base }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    use pretty_assertions::assert_eq;
-
-    const CONFIG: &str = r#"
-{
-  "inputs": [
-    {
-      "inputFile": "./base/openapi.json",
-      "operationSelection": {
-        "excludeTags": [
-          "deprecated"
-        ]
-      }
-    },
-    {
-      "inputFile": "./mod1/openapi.json"
-    },
-    {
-      "inputFile": "./mod2/openapi.json"
-    }
-  ],
-  "output": "./rest-api/user-facing-openapi.json"
-}
-"#;
-    #[test]
-    fn merge_config_deserialize() {
-        let config: MergeConfig = json::from_str(CONFIG).unwrap();
-        assert_eq!(config.inputs.len(), 3);
-    }
 }

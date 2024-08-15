@@ -3,6 +3,7 @@ use std::io;
 
 // use tracing_subscriber::{fmt, EnvFilter};
 
+use openapi_merge::Merge;
 use openapi_merge::MergeConfig;
 
 fn main() -> io::Result<()> {
@@ -15,6 +16,7 @@ fn main() -> io::Result<()> {
             .inspect(report_config)?
             .load_inputs()
             .inspect(report_inputs)?
+            .into_merge()
             .merge()
             .inspect(report_merge)?
             .save()
@@ -42,18 +44,18 @@ pub fn report_inputs(config: &MergeConfig) {
     })
 }
 
-fn report_merge(config: &MergeConfig) {
+fn report_merge(merge: &Merge) {
     println!(
         "## Inputs merged, writing the results out to '{}' ({:?})",
-        config.output.display(),
-        config.merge_time,
+        merge.config.output.display(),
+        merge.merge_time,
     )
 }
 
-fn report_save(config: &MergeConfig) {
+fn report_save(merge: &Merge) {
     println!(
         "## Finished writing to '{}' ({:?})",
-        config.output.display(),
-        config.save_time
+        merge.config.output.display(),
+        merge.save_time
     );
 }
