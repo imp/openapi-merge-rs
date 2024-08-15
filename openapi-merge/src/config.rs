@@ -20,21 +20,14 @@ impl MergeConfig {
     pub fn from_path(path: impl AsRef<Path>) -> io::Result<Self> {
         let now = time::Instant::now();
         let source = path.as_ref().to_path_buf();
-        let merge = load_json_file(&source)?;
+        let config = load_json_file(path)?;
         let load_time = now.elapsed();
 
         Ok(Self {
             source,
             load_time,
-            ..merge
+            ..config
         })
-        // load_json_file::<Self>(path).inspect(|oam| {
-        //     println!(
-        //         "## Loaded the configuration: {} inputs ({:?})",
-        //         oam.inputs.len(),
-        //         now.elapsed()
-        //     )
-        // })
     }
 
     pub fn into_merge(self) -> Merge {

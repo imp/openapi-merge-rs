@@ -1,6 +1,7 @@
 use std::fmt;
 use std::fs;
 use std::io;
+use std::mem;
 use std::path::{Path, PathBuf};
 use std::time;
 

@@ -61,11 +61,11 @@ impl Input {
         self.openapi.security.take()
     }
 
-    pub fn tags(&self) -> Vec<openapiv3::Tag> {
-        self.openapi.tags.clone()
+    pub fn tags(&mut self) -> Vec<openapiv3::Tag> {
+        mem::take(&mut self.openapi.tags)
     }
 
-    pub fn extensions(&self) -> indexmap::IndexMap<String, json::Value> {
-        self.openapi.extensions.clone()
+    pub fn extensions(&mut self) -> indexmap::IndexMap<String, json::Value> {
+        mem::take(&mut self.openapi.extensions)
     }
 }
