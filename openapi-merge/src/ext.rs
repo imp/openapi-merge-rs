@@ -43,9 +43,7 @@ impl OpenAPIExt for OpenAPI {
     }
 
     fn merge_extensions(&mut self, extensions: indexmap::IndexMap<String, serde_json::Value>) {
-        extensions.into_iter().for_each(|(key, value)| {
-            self.extensions.entry(key).or_insert(value);
-        })
+        merge_indexmap(&mut self.extensions, extensions)
     }
 
     fn merge_operation(&mut self, path: &str, method: &str, operation: &openapiv3::Operation) {
@@ -58,7 +56,7 @@ impl OpenAPIExt for OpenAPI {
         let item = paths
             .entry(path.into())
             .or_insert_with(|| openapiv3::ReferenceOr::Item(openapiv3::PathItem::default()));
-        modify_item(item, method, operation);
+        update_item(item, method, operation);
     }
 }
 
@@ -71,7 +69,7 @@ fn merge_indexmap<T>(
     });
 }
 
-fn modify_item(
+fn update_item(
     item: &mut openapiv3::ReferenceOr<openapiv3::PathItem>,
     method: &str,
     operation: &openapiv3::Operation,
@@ -80,35 +78,43 @@ fn modify_item(
         openapiv3::ReferenceOr::Reference { reference } => {
             tracing::warn!(reference, "Cannot modify reference")
         }
-        openapiv3::ReferenceOr::Item(item) => modify_path_item(item, method, operation),
+        openapiv3::ReferenceOr::Item(item) => update_path_item(item, method, operation),
     }
 }
 
-fn modify_path_item(
+fn update_path_item(
     item: &mut openapiv3::PathItem,
     method: &str,
     operation: &openapiv3::Operation,
 ) {
-    let op = match method.to_ascii_lowercase().as_str() {
-        "get" => Some(&mut item.get),
-        "put" => Some(&mut item.put),
-        "post" => Some(&mut item.post),
-        "delete" => Some(&mut item.delete),
-        "options" => Some(&mut item.options),
-        "head" => Some(&mut item.head),
-        "patch" => Some(&mut item.patch),
-        "trace" => Some(&mut item.trace),
-        other => {
-            tracing::warn!(method = other, "Skipping unsupported");
-            None
-        }
-    };
-
-    if let Some(op) = op {
+    if let Some(op) = item.get_mut(method) {
         if op.is_none() {
             *op = Some(operation.clone());
         } else {
             tracing::warn!(method, "Cannot replace existing operation");
+        }
+    }
+}
+
+trait Method {
+    fn get_mut(&mut self, method: &str) -> Option<&mut Option<openapiv3::Operation>>;
+}
+
+impl Method for openapiv3::PathItem {
+    fn get_mut(&mut self, method: &str) -> Option<&mut Option<openapiv3::Operation>> {
+        match method.to_ascii_lowercase().as_str() {
+            "get" => Some(&mut self.get),
+            "put" => Some(&mut self.put),
+            "post" => Some(&mut self.post),
+            "delete" => Some(&mut self.delete),
+            "options" => Some(&mut self.options),
+            "head" => Some(&mut self.head),
+            "patch" => Some(&mut self.patch),
+            "trace" => Some(&mut self.trace),
+            other => {
+                tracing::warn!(method = other, "Skipping unsupported");
+                None
+            }
         }
     }
 }
