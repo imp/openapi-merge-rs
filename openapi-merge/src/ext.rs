@@ -15,16 +15,16 @@ impl OpenAPIExt for OpenAPI {
     fn merge_components(&mut self, components: Option<openapiv3::Components>) {
         if let Some(components) = components {
             let base = self.components.get_or_insert_with(default);
-            merge_indexmap(&mut base.schemas, components.schemas);
-            merge_indexmap(&mut base.responses, components.responses);
-            merge_indexmap(&mut base.parameters, components.parameters);
-            merge_indexmap(&mut base.examples, components.examples);
-            merge_indexmap(&mut base.request_bodies, components.request_bodies);
-            merge_indexmap(&mut base.headers, components.headers);
-            merge_indexmap(&mut base.security_schemes, components.security_schemes);
-            merge_indexmap(&mut base.links, components.links);
-            merge_indexmap(&mut base.callbacks, components.callbacks);
-            merge_indexmap(&mut base.extensions, components.extensions);
+            base.schemas.merge(components.schemas);
+            base.responses.merge(components.responses);
+            base.parameters.merge(components.parameters);
+            base.examples.merge(components.examples);
+            base.request_bodies.merge(components.request_bodies);
+            base.headers.merge(components.headers);
+            base.security_schemes.merge(components.security_schemes);
+            base.links.merge(components.links);
+            base.callbacks.merge(components.callbacks);
+            base.extensions.merge(components.extensions);
         }
     }
 
@@ -43,7 +43,7 @@ impl OpenAPIExt for OpenAPI {
     }
 
     fn merge_extensions(&mut self, extensions: indexmap::IndexMap<String, serde_json::Value>) {
-        merge_indexmap(&mut self.extensions, extensions)
+        self.extensions.merge(extensions)
     }
 
     fn merge_operation(&mut self, path: &str, method: &str, operation: &openapiv3::Operation) {
@@ -58,15 +58,6 @@ impl OpenAPIExt for OpenAPI {
             .or_insert_with(|| openapiv3::ReferenceOr::Item(openapiv3::PathItem::default()));
         update_item(item, method, operation);
     }
-}
-
-fn merge_indexmap<T>(
-    base: &mut indexmap::IndexMap<String, T>,
-    merge: indexmap::IndexMap<String, T>,
-) {
-    merge.into_iter().for_each(|(key, value)| {
-        base.entry(key).or_insert(value);
-    });
 }
 
 fn update_item(
@@ -116,5 +107,17 @@ impl Method for openapiv3::PathItem {
                 None
             }
         }
+    }
+}
+
+trait Merge {
+    fn merge(&mut self, other: Self);
+}
+
+impl<T> Merge for indexmap::IndexMap<String, T> {
+    fn merge(&mut self, other: Self) {
+        other.into_iter().for_each(|(key, value)| {
+            self.entry(key).or_insert(value);
+        });
     }
 }
